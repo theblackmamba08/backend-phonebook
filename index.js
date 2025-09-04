@@ -6,6 +6,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('dist'));
 
 const phonebook = [
   {
@@ -43,6 +44,9 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :b
 // }
 // app.use(requestLogger);
 
+app.get('/', (request, response) => {
+    response.sendFile(path.resolve(__dirname, 'dist', 'index.html'))
+})
 
 app.get('/info', (request, response) => {
     const date = new Date();
