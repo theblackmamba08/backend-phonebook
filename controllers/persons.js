@@ -44,14 +44,14 @@ personsRouter.put('/:id', (request, response, next) => {
 
     Person.findByIdAndUpdate(
         request.params.id,
-        { name: body.name, number: body.number },  
+        { name: body.name, number: body.number },
         { new: true, runValidators: true, context: 'query' }
     ).then((updatedPerson) => {
         if (!updatedPerson) {
             return response.status(404).json({ error: 'person not found' })
-        } 
+        }
         response.json(updatedPerson)
-    }).catch((error) => next(error))  
+    }).catch((error) => next(error))
 })
 
 personsRouter.delete('/:id', (request, response, next) => {

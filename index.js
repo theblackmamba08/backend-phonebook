@@ -47,6 +47,7 @@ app.get('/info', (request, response) => {
             )
         })
         .catch((error) => {
+            console.log(`${error.response.data.error}`)
             response.status(500).send({ error: 'Database error' })
         })
 })
