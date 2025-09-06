@@ -1,99 +1,61 @@
-const express = require('express');
-const morgan = require('morgan');
-const path = require('path');
+const express = require('express')
+// const morgan = require('morgan')
+const path = require('path')
+const mongoose = require('mongoose')
+const personsRouter = require('./controllers/persons')
+const logger = require('./utils/logger')
+const config = require('./utils/config')
+const middleware = require('./utils/middleware')
+const Person = require('./models/person')
 
-const app = express();
+const app = express()
 
-app.use(express.json());
-app.use(express.static('dist'));
+logger.info('Connecting to', config.MONGODB_URI)
 
-const phonebook = [
-  {
-    "id": 1,
-    "name": "Arto Hellas",
-    "number": "040-123456"
-  },
-  {
-    "id": 2,
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523"
-  },
-  {
-    "id": 3,
-    "name": "Dan Abramov",
-    "number": "12-43-234345"
-  },
-  {
-    "id": 4,
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122"
-  }
-]
+mongoose
+    .connect(config.MONGODB_URI)
+    .then(() => {
+        logger.info('Connected to MongoDB')
+    })
+    .catch((error) => {
+        logger.error('Error connecting to MongoDB:', error.message)
+    })
 
-// app.use(morgan('tiny'));
-morgan.token('body', (req) => req.method === 'POST' ? JSON.stringify(req.body) : '');
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
+app.use(express.static('dist'))
+app.use(express.json())
+app.use(middleware.requestLogger)
 
-// const requestLogger = (request, response, next) => {
-//     console.log('Method:', request.method);
-//     console.log('Path:  ', request.path);
-//     console.log('Body:  ', request.body);
-//     console.log('---');
-//     next();
-// }
-// app.use(requestLogger);
+// morgan.token('body', (req) =>
+//     req.method === 'POST' ? JSON.stringify(req.body) : ''
+// )
+// app.use(
+//     morgan(
+//         ':method :url :status :res[content-length] - :response-time ms :body'
+//     )
+// )
 
 app.get('/', (request, response) => {
     response.sendFile(path.resolve(__dirname, 'dist', 'index.html'))
 })
 
 app.get('/info', (request, response) => {
-    const date = new Date();
-    response.send(`<p>Phonebook has info for ${phonebook.length} people</p><p>${date}</p>`);
-});
+    const date = new Date()
+    Person.countDocuments({})
+        .then((count) => {
+            response.send(
+                `<p>Phonebook has info for ${count} people</p><p>${date}</p>`
+            )
+        })
+        .catch((error) => {
+            response.status(500).send({ error: 'Database error' })
+        })
+})
 
-app.get('/api/persons', (request, response) => {
-    response.json(phonebook);
-});
+app.use('/api/persons', personsRouter)
 
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id);
-    const person = phonebook.find(person => person.id === id);
-    if (person) {
-        response.json(person);
-    } else {
-        response.status(404).end();
-    }
-});
+app.use(middleware.unknownEndpoint)
+app.use(middleware.errorHandler)
 
-app.post('/api/persons', (request, response) => {
-    const body = request.body;
-    if (!body.name || !body.number) {
-        return response.status(400).json({ 
-            error: 'name or number is missing' 
-        });
-    }
-    if (phonebook.find(person => person.name === body.name)) {
-        return response.status(400).json({ 
-            error: 'name must be unique' 
-        });
-    }
-    const person = {
-        id: Math.floor(Math.random() * 10000),
-        name: body.name,
-        number: body.number,
-    };
-    phonebook.push(person);
-    response.json(person);
-});
-
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id);
-    const person = phonebook.filter(person => person.id !== id);
-    response.status(204).end();
-});
-
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+app.listen(config.PORT, () => {
+    logger.info(`Server running on port ${config.PORT}`)
+})

@@ -1,20 +1,29 @@
+### Infos du phonebook
+GET http://localhost:3001/info
+
 ### Obtenir toutes les personnes
 GET http://localhost:3001/api/persons
 
 ### Obtenir une personne par id
-GET http://localhost:3001/api/persons/1
+GET http://localhost:3001/api/persons/68bbe1daf66ebd0333912c43
 
 ### Ajouter une nouvelle personne
 POST http://localhost:3001/api/persons
 Content-Type: application/json
 
 {
-  "name": "John Doe",
-  "number": "123-456789"
+    "name": "Arto Hellas"
+}
+
+### Mettre à jour une personne
+PUT http://localhost:3001/api/persons/68bbed46b0c9415175ba6425
+Content-Type: application/json
+
+{
+  "name": "Arto",
+  "number": "987-654321"
 }
 
 ### Supprimer une personne
-DELETE http://localhost:3001/api/persons/1
+DELETE http://localhost:3001/api/persons/68bbed46b0c9415175ba6425
 
-### Infos du phonebook
-GET http://localhost:3001/info
